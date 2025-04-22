@@ -3,7 +3,7 @@
     model-value="dialogvisible"
     :title="dialogTitle"
     width="30%"
-    @close="handleClose"
+    @close="handleclose"
   >
   <el-form
     ref="formRef"

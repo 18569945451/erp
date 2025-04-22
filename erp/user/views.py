@@ -9,7 +9,7 @@ import json
 from erp import settings
 
 from menu.models import SysMenu, SysMenuSerializer
-from role.models import SysRole
+from role.models import SysRole, SysUserRole
 from user.models import SysUser, SysUserSerializer
 
 
@@ -113,7 +113,7 @@ class SaveView(View):
         else:
             print('我是else里面的')
             obj_sysUser = SysUser(id=data['id'], username=data['username'], password=data['password'],
-                                  avatar=avatar, email=data['email'], phonenumber=data['phonenumber'],
+                                  avatar=data['avatar'], email=data['email'], phonenumber=data['phonenumber'],
                                   login_date=data['login_date'], status=data['status'], create_time=data['create_time'],
                                   update_time=data['update_time'], remark=data['remark'])
             obj_sysUser.update_time = datetime.now().date()
@@ -227,6 +227,24 @@ class Actionview(View):
         id = request.GET.get("id")
         user_object = SysUser.objects.get(id=id)
         return JsonResponse({'code': 200, 'user': SysUserSerializer(user_object).data})
+
+    def delete(self, request):
+        """
+        删除操作
+        :param request:
+        :return:
+        """
+        # 使用 request.GET 获取查询字符串中的数据
+        idList = dict(request.GET)
+        # request.GET 返回的是一个 QueryDict 对象，其中的值是列表形式，需要将其转换为单个值
+        for key, value in idList.items():
+            if isinstance(value, list) and len(value) == 1:
+                idList[key] = value[0]
+        # 将字典的值转换为整数列表
+        id_list = [int(id) for id in idList.values()]
+        SysUserRole.objects.filter(user_id__in=id_list).delete()
+        SysUser.objects.filter(id__in=id_list).delete()
+        return JsonResponse({'code': 200})
 
 
 class Checkview(View):

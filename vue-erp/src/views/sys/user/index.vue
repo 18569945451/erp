@@ -6,9 +6,14 @@
         </el-col>
       <el-button type="primary" :icon="Search" @click="initUserList">搜索</el-button>
       <el-button type="success" :icon="DocumentAdd" @click="handleDialogValue()">新增</el-button>
+        <el-popconfirm title="您确定批量删除这些记录吗？" @confirm="handleDelete(null)">
+          <template #reference>
+            <el-button type="danger" :disabled="delBtnStatus" :icon="Delete">批量删除</el-button>
+          </template>
+        </el-popconfirm>
       </el-row>
 
-      <el-table :data="tableData" stripe style="width: 100%">
+      <el-table :data="tableData" stripe style="width: 100%" @selection-change="handleSelectionChange">
     <el-table-column type="selection" width="55" />
     <el-table-column prop="avatar" label="头像" width="80" align="center">
       <template v-slot="scope">
@@ -43,10 +48,10 @@
             <el-button type="warning" :icon="RefreshRight">重置密码</el-button>
           </template>
         </el-popconfirm>
-        <el-button type="primary" v-if="scope.row.username!='python222'" :icon="Edit"
-          @click="handleDialogValue(scope.row.id)"></el-button>
-          <el-popconfirm v-if="scope.row.username!='python222'" title="您确定要删除这条记录吗？"
-                            @confirm="handleDelete(scope.row.id)">
+        <el-button type="primary" v-if="scope.row.username!='python222'" :icon="Edit" @click="handleDialogValue(scope.row.id)"></el-button>
+
+          <el-popconfirm v-if="scope.row.username!='python222'" title="您确定要删除这条记录吗？" @confirm="handleDelete(scope.row.id)">
+
           <template #reference>
           <el-button type="danger" :icon="Delete"/>
           </template>
@@ -66,9 +71,9 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     />
-  <Dialog v-model="dialogVisible" :dialogVisible="dialogVisible" :id="id" :dialogTitle="dialogTitle"
-          @initUserList="initUserList"></Dialog>
+    <Dialog v-model="dialogVisible" :dialogVisible="dialogVisible" :id="id" :dialogTitle="dialogTitle"  @initUserList="initUserList"></Dialog>
   </div>
+  <RoleDialog v-model="menuDialogVisible" :menuDialogVisible="menuDialogVisible" :id="id" @initRoleList="initRoleList"></RoleDialog>
 </template>
 
 <script setup>
@@ -76,6 +81,8 @@ import {ref} from "vue";
 import requestUtil,{getServerUrl} from '@/util/request'
 import {Search,Delete,DocumentAdd,Edit,Tools,RefreshRight} from '@element-plus/icons-vue'
 import Dialog from "@/views/sys/user/components/dialog.vue";
+import {ElMessage} from "element-plus";
+import RoleDialog from './components/roleDialog.vue'
 
 const tableData=ref([])
 const total=ref(0)
@@ -91,17 +98,26 @@ const dialogTitle = ref("")
 const id = ref(-1)
 
 
+const delBtnStatus = ref(true)
+const multipleSelection = ref([])
+
+const handleSelectionChange = (selection) => {
+  console.log("勾选了")
+  console.log(selection)
+  multipleSelection.value = selection;
+  delBtnStatus.value = selection.length == 0;
+}
+
 const handleDialogValue = (userId) =>{
   if (userId) {
-  id.value = UserId;
-  dialogTitle.value="用户修改"
+    id.value = userId;
+    dialogTitle.value="用户修改"
   } else {
     id.value = -1;
     dialogTitle.value = "用户添加"
   }
   dialogVisible.value = true
 }
-
 
 const initUserList=async ()=>{
   const res = await requestUtil.post('user/search',queryForm.value)
@@ -115,15 +131,38 @@ const handleSizeChange=(pageSize)=>{
 
   initUserList()
 }
+
 //当前页变化
 const handleCurrentChange=(pageNum)=>{
   queryForm.value.pageNum=pageNum
   initUserList()
 }
 
+const handleDelete = async (id) => {
+    var ids = []
+    if (id) {
+        ids.push(id)
+    } else {
+        multipleSelection.value.forEach(row => {
+            ids.push(row.id)
+        })
+    }
+    const res = await requestUtil.del("user/action", ids)
+    if (res.data.code == 200) {
+        ElMessage({
+            type:'success',
+            message: '执行成功!'
+        })
+        initUserList();
+    } else {
+        ElMessage({
+            type: 'error',
+            message: res.data.msg,
+        })
+    }
+}
 
 initUserList()
-
 </script>
 
 <style lang="scss" scoped>
