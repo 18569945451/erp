@@ -1,6 +1,6 @@
-from datetime import datetime
-
-from django.core.paginator import Paginator
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.core.paginator import Paginator, EmptyPage
 from django.http import JsonResponse
 from django.template.context_processors import request
 from django.views import View
@@ -37,6 +37,8 @@ class LoginView(View):
             jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER  # 编码操作
             # 将用户的对象传递进去，获取该对象的属性值
             payload = jwt_payload_handler(user)
+            # 修改 token 过期时间为 12 小时
+            payload['exp'] = datetime.now() + timedelta(hours=12)
             # 将属性值编码成jwt格式的字符串（生成jwt token）
             token = jwt_encode_handler(payload)
             # 获取身份权限信息
@@ -107,7 +109,9 @@ class SaveView(View):
                                   status=data['status'],
                                   remark=data['remark'])
             obj_sysUser.create_time = datetime.now().date()
-            obj_sysUser.avatar = 'default.jpg'
+            obj_sysUser.update_time = datetime.now().date()
+            obj_sysUser.login_date = datetime.now().date()
+            obj_sysUser.avatar = 'default.png'
             obj_sysUser.password = "123456"
             obj_sysUser.save()
         else:
@@ -193,12 +197,21 @@ class SearchView(View):
             if isinstance(value, list) and len(value) == 1:
                 data[key] = value[0]
 
-        pageNum = data['pageNum']  # 当前页
-        pageSize = data['pageSize']  # 每页大小
+        pageNum = int(data['pageNum'])  # 当前页
+        pageSize = int(data['pageSize'])  # 每页大小
         query = data['query']  # 查询参数
-        print(pageNum, pageSize)
-        userListPage = Paginator(SysUser.objects.filter(username__icontains=query), pageSize).page(pageNum)
-        print(userListPage)
+
+        user_list = SysUser.objects.filter(username__icontains=query)
+        paginator = Paginator(user_list, pageSize)
+
+        try:
+            userListPage = paginator.page(pageNum)
+        except EmptyPage:
+            if pageNum > paginator.num_pages:
+                userListPage = paginator.page(paginator.num_pages)  # 如果页码超出范围，返回最后一页
+            else:
+                userListPage = paginator.page(1)  # 如果页码小于 1，返回第一页
+
         obj_users = userListPage.object_list.values()  # 转成字典
         users = list(obj_users)  # 把外层的容器转为List
         for user in users:
@@ -213,7 +226,8 @@ class SearchView(View):
                 roleDict['name'] = role.name
                 roleListDict.append(roleDict)
             user['roleList'] = roleListDict
-        total = SysUser.objects.filter(username__icontains=query).count()
+
+        total = user_list.count()
         return JsonResponse({'code': 200, 'userList': users, 'total': total})
 
 
@@ -247,7 +261,7 @@ class Actionview(View):
         return JsonResponse({'code': 200})
 
 
-class Checkview(View):
+class CheckView(View):
     def post(self, request):
         # 使用 request.GET 获取查询字符串中的数据
         data = dict(request.GET)
@@ -262,3 +276,69 @@ class Checkview(View):
             return JsonResponse({'code': 500})
         else:
             return JsonResponse({'code': 200})
+
+
+# 重置密码
+class PasswordView(View):
+    def get(self, request):
+        id = request.GET.get("id")
+        user_object = SysUser.objects.get(id=id)
+        user_object.password = "123456"
+        user_object.update_time = datetime.now().date()
+        user_object.save()
+        return JsonResponse({'code': 200})
+
+
+# 用户状态修改
+class StatusView(View):
+    def post(self, request):
+        # 使用 request.GET 获取查询字符串中的数据
+        data = dict(request.GET)
+        # request.GET 返回的是一个 QueryDict 对象，其中的值是列表形式，需要将其转换为单个值
+        for key, value in data.items():
+            if isinstance(value, list) and len(value) == 1:
+                data[key] = value[0]
+
+        id = data['id']
+        status = data['status']
+        user_object = SysUser.objects.get(id=id)
+        user_object.status = status
+        user_object.save()
+        return JsonResponse({'code': 200})
+
+
+# 用户角色授权
+class GrantRole(View):
+    def post(self, request):
+        # 使用 request.GET 获取查询字符串中的数据
+        data = dict(request.GET)
+        # request.GET 返回的是一个 QueryDict 对象，其中的值是列表形式，需要将其转换为单个值
+        for key, value in data.items():
+            if isinstance(value, list) and len(value) == 1:
+                data[key] = value[0]
+
+        user_id = data.get('id')
+        roleIdList = data.get('roleIds[]')
+
+        if not user_id:
+            return JsonResponse({'code': 500, 'msg': '用户 ID 不能为空！'})
+
+        if roleIdList is None:
+            return JsonResponse({'code': 500, 'msg': '角色 ID 列表不能为空！'})
+
+        try:
+            user_id = int(user_id)
+            if isinstance(roleIdList, str):
+                roleIdList = [roleIdList]
+            SysUserRole.objects.filter(user_id=user_id).delete()  # 删除用户角色关联表中的指定用户数据
+            for roleId in roleIdList:
+                try:
+                    roleId = int(roleId)
+                    userRole = SysUserRole(user_id=user_id, role_id=roleId)
+                    userRole.save()
+                except ValueError:
+                    return JsonResponse({'code': 500, 'msg': f'无效的角色 ID: {roleId}'})
+        except ValueError:
+            return JsonResponse({'code': 500, 'msg': '无效的用户 ID！'})
+
+        return JsonResponse({'code': 200})

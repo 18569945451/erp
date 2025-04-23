@@ -13,9 +13,8 @@ class SysRole(models.Model):
     update_time = models.DateField(null=True, verbose_name="更新时间")
     remark = models.CharField(max_length=500, null=True, verbose_name="备注")
 
-
-class Meta:
-    db_table = "sys_role"
+    class Meta:
+        db_table = "sys_role"
 
 
 # 序列化类

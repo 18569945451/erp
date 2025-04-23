@@ -14,7 +14,7 @@
 
 
 <script setup>
-import {defineProps, ref} from 'vue'
+import {ref} from 'vue'
 import requestUtil from '@/util/request'
 import {ElMessage} from "element-plus";
 

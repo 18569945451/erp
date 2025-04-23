@@ -1,61 +1,42 @@
 <template>
   <el-dialog
-    model-value="dialogvisible"
-    :title="dialogTitle"
-    width="30%"
-    @close="handleclose"
+      model-value="dialogVisible"
+      :title="dialogTitle"
+      width="33%"
+      @close="handleClose"
   >
-  <el-form
-    ref="formRef"
-    :model="form"
-    :rules="rules"
-    label-width="100px"
-  >
-    <el-form-item label="用户名" prop="username">
-      <el-input v-model="form.username" :disabled="form.id==-1?false:'disabled'"/>
-      <el-alert
-        v-if="form.id==-1"
-        title="默认初始密码：123456"
-        :closable="false"
-        style="line-height: 10px;"
-        type="success">
-      </el-alert>
-    </el-form-item>
+    <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="100px"
+    >
+      <el-form-item label="角色名称" prop="name">
+        <el-input v-model="form.name"/>
+      </el-form-item>
+      <el-form-item label="权限字符" prop="code">
+        <el-input v-model="form.code"/>
+      </el-form-item>
+      <el-form-item label="备注" prop="remark">
+        <el-input v-model="form.remark" type="textarea" :rows="4"/>
+      </el-form-item>
 
-  <el-form-item label="手机号" prop="phonenumber">
-    <el-input v-model="form.phonenumber"/>
-  </el-form-item>
-
-  <el-form-item label="邮箱" prop="email">
-    <el-input v-model="form.email"/>
-  </el-form-item>
-
-  <el-form-item label="状态" prop="status">
-    <el-radio-group v-model="form.status">
-      <el-radio :label="1">正常</el-radio>
-      <el-radio :label="0">禁用</el-radio>
-    </el-radio-group>
-  </el-form-item>
-
-  <el-form-item label="备注" prop="remark">
-    <el-input v-model="form.remark" type="textarea" :rows="4"/>
-  </el-form-item>
-
-
-  </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-      <el-button type="primary" @click="handleConfirm">确认</el-button>
-      <el-button @click="handleClose">取消</el-button>
-      </span>
-    </template>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="handleConfirm">确认</el-button>
+          <el-button @click="handleClose">取消</el-button>
+        </span>
+      </template>
   </el-dialog>
+
 </template>
 
 <script setup>
-import {defineEmits, defineProps, ref, watch} from "vue";
+import { ref, watch} from "vue";
 import requestUtil from "@/util/request";
 import {ElMessage} from 'element-plus'
+
 
 const props = defineProps(
     {
@@ -79,56 +60,27 @@ const props = defineProps(
 const form = ref({
     id:-1,
     username:"",
-    password:"123456",
-    status:1,
-    phonenumber:"",
-    email: "",
+    code:"",
     remark:""
 })
 
-
-const checkUsername = async (rule, value, callback) => {
-  if (form.value.id == -1) {
-    const res = await requestUtil.post("user/check", {username: form.value.username});
-    if (res.data.code == 500) {
-      callback(new Error("用户名已存在！"));
-    } else {
-      callback();
-    }
-  }else {
-    callback();
-  }
-}
 const rules = ref({
-    username: [
-        { required: true, message: "请输入用户名"},
-        { required: true, validator:checkUsername, trigger: "blur"}
+    name: [
+        { required: true, message: "请输入角色名称"},
     ],
-    email: [
-        { required: true, message: "邮箱地址不能为空", trigger: "blur" },
-        {
-            type: "email",
-            message: "请输入正确的邮箱地址",
-            trigger: ["blur", "change"]
-        }
+    code: [
+        { required: true, message: "请输入权限字符"},
     ],
-    phonenumber: [
-        { required: true, message: "手机号码不能为空", trigger: "blur" },
-        {
-            pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/,
-            message: "请输入正确的手机号码",
-            trigger: "blur"
-        }
-    ]
 });
 
 const formRef =ref(null)
 
 const initFormData =async (id)=>{
-  const res = await requestUtil.get("user/action?id=" + id);
-  form.value = res.data.user
+  const res = await requestUtil.get("role/action?id=" + id);
+  form.value = res.data.role
 }
 
+//观测dialogVisible变化
 watch(
     ()=> props.dialogVisible,
     ()=>{
@@ -138,16 +90,13 @@ watch(
       }else {
         form.value = {
           id:-1,
-          username: "",
-          password: "123456",
-          status: 1,
-          phonenumber: "",
-          email: "",
-          remark: ""
+          username:"",
+          code:"",
+          remark:""
         }
       }
 })
-
+//定义调用父类的方法
 const emits = defineEmits( ['update:modelValue', 'initUserList'])
 
 const handleClose = () => {
@@ -158,12 +107,12 @@ const handleClose = () => {
 const handleConfirm =()=>{
   formRef.value.validate(async (valid) => {
   if (valid) {
-    let result = await requestUtil.post("user/save", form.value);
+    let result = await requestUtil.post("role/save", form.value);
     let data = result.data;
     if (data.code == 200) {
       ElMessage.success("执行成功！")
       formRef.value.resetFields();
-      emits("initUserList")
+      emits("initRoleList")
       handleClose();
     } else {
       ElMessage.error(data.msg);

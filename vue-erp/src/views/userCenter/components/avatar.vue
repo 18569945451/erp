@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref } from "vue";
+import {ref } from "vue";
 import requestUtil, { getServerUrl } from "@/util/request";
 import { ElMessage } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";

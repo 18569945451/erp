@@ -73,7 +73,7 @@
     />
     <Dialog v-model="dialogVisible" :dialogVisible="dialogVisible" :id="id" :dialogTitle="dialogTitle"  @initUserList="initUserList"></Dialog>
   </div>
-  <RoleDialog v-model="menuDialogVisible" :menuDialogVisible="menuDialogVisible" :id="id" @initRoleList="initRoleList"></RoleDialog>
+  <RoleDialog v-model="roleDialogVisible" :sysRoleList="sysRoleList" :roleDialogVisible="roleDialogVisible" :id="id" @initUserList="initUserList"></RoleDialog>
 </template>
 
 <script setup>
@@ -96,6 +96,9 @@ const queryForm=ref({
 const dialogVisible = ref(false)
 const dialogTitle = ref("")
 const id = ref(-1)
+
+const sysRoleList = ref([])
+const roleDialogVisible = ref(false)
 
 
 const delBtnStatus = ref(true)
@@ -161,6 +164,47 @@ const handleDelete = async (id) => {
         })
     }
 }
+//重置密码
+const handleResetPassword = async (id) => {
+    const res = await requestUtil.get("user/resetPassword?id=" + id)
+    if (res.data.code === 200) {
+        ElMessage({
+            type:'success',
+            message: '执行成功!'
+        })
+        initUserList();
+    } else {
+        ElMessage({
+            type: 'error',
+            message: res.data.msg,
+        })
+    }
+}
+//修改禁用启用状态
+const statusChangeHandle = async (row) => {
+    let res = await requestUtil.post("user/status", {id: row.id, status: row.status});
+    if (res.data.code === 200) {
+        ElMessage({
+            type:'success',
+            message: '执行成功!'
+        })
+    } else {
+        ElMessage({
+            type: 'error',
+            message: res.data.msg,
+        })
+    }
+    initUserList();
+}
+//角色权限添加
+const handleRoleDialogValue = (userId, roleList) => {
+    console.log("roleList: ", roleList)
+    console.log("id: ", id)
+    id.value = userId;
+    sysRoleList.value = roleList;
+    roleDialogVisible.value = true
+}
+
 
 initUserList()
 </script>

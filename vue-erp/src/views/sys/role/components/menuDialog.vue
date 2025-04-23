@@ -29,7 +29,7 @@
 </el-dialog>
 </template>
 <script setup>
-import {defineEmits, defineProps, ref, watch} from "vue";
+import {ref, watch} from "vue";
 import requestUtil, {getServerUrl} from "@/util/request";
 import {ElMessage} from 'element-plus'
 
@@ -51,6 +51,10 @@ const props = defineProps({
     }
 })
 
+const form = ref({
+  id:-1
+})
+
 const treeData = ref([]);
 const formRef = ref(null);
 const treeRef = ref(null);
@@ -59,6 +63,8 @@ const initFormData = async (id) => {
     const res = await requestUtil.get("menu/treeList");
     treeData.value = res.data.treeList;
     form.value.id = id;
+    const res2 = await requestUtil.get("role/menus?id=" + id);
+    treeRef.value.setCheckedKeys(res2.data.menuIdList);
 }
 
 watch(
@@ -76,6 +82,20 @@ const emits = defineEmits(['update:modelValue', 'initRoleList'])
 
 const handleClose = () => {
     emits('update:modelValue', false)
+}
+
+//授予权限
+const handleConfirm = async () => {
+    var menuIds = treeRef.value.getCheckedKeys();
+    let result = await requestUtil.post("role/grant", {"id": form.value.id, "menuIds": menuIds});
+    let data = result.data;
+    if (data.code === 200) {
+        ElMessage.success("执行成功！")
+        emits("initRoleList")
+        handleClose();
+    } else {
+        ElMessage.error(data.msg);
+    }
 }
 
 </script>

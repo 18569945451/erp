@@ -23,31 +23,12 @@ httpService.interceptors.request.use(
 
 // 2. 添加响应拦截器
 httpService.interceptors.response.use(
-    // 响应成功返回响应数据
     function (response) {
+        // 对响应数据做什么
         return response;
     },
-    // 响应失败返回失败信息
-    async function (error) {
-        const originalRequest = error.config;
-        if (error.response.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-            try {
-                // 调用刷新 token 的接口
-                const refreshResponse = await httpService.post("user/refreshToken", {
-                    // 这里可能需要传递一些刷新 token 所需的参数
-                });
-                const newToken = refreshResponse.data.token;
-                window.sessionStorage.setItem("token", newToken);
-                originalRequest.headers.Authorization = newToken;
-                return httpService(originalRequest);
-            } catch (refreshError) {
-                // 刷新 token 失败，跳转到登录页
-                window.sessionStorage.clear();
-                window.location.href = "/login";
-                return Promise.reject(refreshError);
-            }
-        }
+    function (error) {
+        // 对响应错误做什么
         return Promise.reject(error);
     }
 );

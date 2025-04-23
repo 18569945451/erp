@@ -13,13 +13,14 @@
       </el-menu-item>
 
         <el-sub-menu :index="menu.path" v-for="menu in menuList">
+          <!--大标题循环-->
           <template #title>
             <el-icon>
               <svg-icon :icon="menu.icon"/>
             </el-icon>
             <span>{{ menu.name }}</span>
           </template>
-
+          <!--子标题循环-->
           <el-menu-item :index="item.path" v-for="item in menu.children" @click="openTab(item)">
           <el-icon>
             <svg-icon :icon="item.icon"/>

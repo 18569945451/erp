@@ -94,11 +94,11 @@ font-size: 13px;
   float: right !important;
 }
 
-::v-deep.el-card_body{
+:deep(.el-card_body){
 height:230px;
 }
 
-::v-deep .box-card {
+:deep(.box-card) {
   height: 450px;
 }
 

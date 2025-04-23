@@ -1,6 +1,6 @@
 <template>
 <el-dialog
-    model-value="menuDialogVisible"
+    model-value="roleDialogVisible"
     title="分配权限"
     width="30%"
     @close="handleClose"
@@ -10,16 +10,14 @@
         :model="form"
         label-width="100px"
     >
-        <el-tree
-            ref="treeRef"
-            :data="treeData"
-            :props="defaultProps"
-            show-checkbox
-            :default-expand-all="true"
-            node-key="id"
-            :check-strictly="true"
-        />
+    <el-checkbox-group v-model="form.checkedRoles">
+          <el-checkbox v-for="role in form.roleList" :id="role.id" :key="role.id" :label="role.id" name="checkedRoles">
+            {{ role.name }}
+          </el-checkbox>
+    </el-checkbox-group>
+
     </el-form>
+
     <template #footer>
     <span class="dialog-footer">
       <el-button type="primary" @click="handleConfirm">确认</el-button>
@@ -29,14 +27,9 @@
 </el-dialog>
 </template>
 <script setup>
-import {defineEmits, defineProps, ref, watch} from "vue";
+import {ref, watch} from "vue";
 import requestUtil, {getServerUrl} from "@/util/request";
 import {ElMessage} from 'element-plus'
-
-const defaultProps = {
-    children: 'children',
-    label: 'name'
-}
 
 const props = defineProps({
     id: {
@@ -44,29 +37,43 @@ const props = defineProps({
         default: -1,
         required: true
     },
-    menuDialogVisible: {
+    roleDialogVisible: {
         type: Boolean,
         default: false,
         required: true
+    },
+    sysRoleList:{
+      type:Array,
+      default:[],
+      required:true
     }
 })
 
-const treeData = ref([]);
+const form =ref({
+  id:-1,
+  roleList:[],
+  checkedRoles:[]
+})
+
+
 const formRef = ref(null);
-const treeRef = ref(null);
 
 const initFormData = async (id) => {
-    const res = await requestUtil.get("menu/treeList");
-    treeData.value = res.data.treeList;
+    const res = await requestUtil.get("role/listAll");
+    form.value.roleList = res.data.roleList;
     form.value.id = id;
 }
 
 watch(
-    () => props.menuDialogVisible,
+    () => props.roleDialogVisible,
     () => {
         let id = props.id;
         console.log("id=" + id)
         if (id != -1) {
+          form.value.checkedRoles = []
+          props.sysRoleList.forEach(item =>{
+            form.value.checkedRoles.push(item.id)
+          })
             initFormData(id)
         }
     }
@@ -76,6 +83,25 @@ const emits = defineEmits(['update:modelValue', 'initRoleList'])
 
 const handleClose = () => {
     emits('update:modelValue', false)
+}
+
+//授予权限
+const handleConfirm = async () => {
+  formRef.value.validate(async (valid) =>{
+    if (valid){
+      let result = await requestUtil.post("user/grantRole", {"id": form.value.id, "roleIds": form.value.checkedRoles});
+      let data = result.data;
+      if (data.code === 200) {
+          ElMessage.success("执行成功！")
+          emits("initUserList")
+          handleClose();
+      } else {
+          ElMessage.error(data.msg);
+      }
+    } else {
+      console.log('fail')
+    }
+  })
 }
 
 </script>

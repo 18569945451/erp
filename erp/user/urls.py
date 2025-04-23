@@ -1,6 +1,7 @@
 from django.urls import path
 
-from user.views import TestView, LoginView, SaveView, PwdView, AvatarView, ImageView, SearchView, Actionview, Checkview
+from user.views import TestView, LoginView, SaveView, PwdView, AvatarView, ImageView, SearchView, Actionview, CheckView, \
+    PasswordView, StatusView, GrantRole
 from user.views import JwtTestView
 
 urlpatterns = [
@@ -12,7 +13,12 @@ urlpatterns = [
     path('search', SearchView.as_view(), name='search'),  # 用户信息查询
 
     path('action', Actionview.as_view(), name='action'),  # 用户信息操作
-    path('check', Checkview.as_view(), name='check'),  # 用户名查重
+    path('check', CheckView.as_view(), name='check'),  # 用户名查重
+    path('resetPassword', PasswordView.as_view(), name='resetPassword'),  # 重置密码
+    path('status', StatusView.as_view(), name='status'),  # 状态修改
+
+    path('grantRole', GrantRole.as_view(), name='grant'),  # 角色授权
+
     path('test', TestView.as_view(), name='test'),  # 测试
     path('jwt_test', JwtTestView.as_view(), name='jwt_test'),  # jwt测试
 ]

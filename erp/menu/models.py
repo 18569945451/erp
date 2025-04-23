@@ -30,16 +30,28 @@ class SysMenuSerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
 
     def get_children(self, obj):
-        # print("111")
+        # 如果对象有 children 属性，使用该属性
         if hasattr(obj, "children"):
-            serializerMenuList: list[SysMenuSerializer2] = list()
-        for sysMenu in obj.children:
+            serializerMenuList = []
+            for sysMenu in obj.children:
+                serializerMenuList.append(SysMenuSerializer2(sysMenu).data)
+            return serializerMenuList
+        # 如果对象没有 children 属性，从数据库中查询子菜单
+        children = SysMenu.objects.filter(parent_id=obj.id).order_by("order_num")
+        serializerMenuList = []
+        for sysMenu in children:
             serializerMenuList.append(SysMenuSerializer2(sysMenu).data)
         return serializerMenuList
 
     class Meta:
         model = SysMenu
         fields = '__all__'
+
+
+class SysMenuSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = SysMenu
+        fields = "__all__"
 
 
 class SysMenuSerializer2(serializers.ModelSerializer):
