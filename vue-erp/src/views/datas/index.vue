@@ -49,12 +49,18 @@ const fetchData = async () => {
   data.value = null;
 
   try {
-    // 这里只是模拟数据请求，实际应用中需要替换为真实的 API 地址
-    const response = await requerUntil.get('datas/pull');
+      // 构建请求数据
+    const requestData = {
+      pageSize: parseInt(pageSize.value),
+      startDate: startDate.value,
+      endDate: endDate.value,
+      dataSource: dataSource.value
+    };
+    const response = await requerUntil.post('datas/pull/',requestData);
     if (response.status !== 200) {
       throw new Error('网络请求失败');
     }
-    data.value = await response.json();
+    data.value = await response.result();
   } catch (err) {
     error.value = err.message;
   } finally {
