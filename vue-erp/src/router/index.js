@@ -43,7 +43,12 @@ const routes = [
         path:'/userCenter',
         name:'个人中心',
         component: () => import('../views/userCenter/index.vue')
-      }
+      },
+        {
+        path:'/datas/pull',
+        name:'数据拉取',
+        component: () => import('../views/datas/index.vue')
+      },
     ]
   },
     //登录

@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     "corsheaders",
     "user.apps.UserConfig",
     "role.apps.RoleConfig",
-    "menu.apps.MenuConfig"
+    "menu.apps.MenuConfig",
+    "datas.apps.DatasConfig"
 ]
 # 中间件
 MIDDLEWARE = [

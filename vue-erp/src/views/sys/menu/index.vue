@@ -51,6 +51,7 @@ import {ref} from "vue";
 import requestUtil from '@/util/request'
 import {Delete, Edit, RefreshRight, Tools} from "@element-plus/icons-vue";
 import Dialog from './components/dialog'
+import {ElMessage} from "element-plus";
 
 
 const tableData =ref([])
@@ -76,7 +77,8 @@ const handleDialogValue = (menuId) => {
 }
 
 const handleDelete = async (id) => {
-    const res = await requestUtil.del("menu/action", id)
+    const params = { id };
+    const res = await requestUtil.del("menu/action", params)
     if (res.data.code === 200) {
         ElMessage({
             type:'success',

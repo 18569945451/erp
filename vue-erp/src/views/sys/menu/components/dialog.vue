@@ -63,7 +63,7 @@
 </template>
 
 <script setup>
-import { defineEmits, defineProps, ref, watch } from "vue";
+import {ref, watch } from "vue";
 import requestUtil, { getServerUrl } from "@/util/request";
 import { ElMessage } from 'element-plus'
 

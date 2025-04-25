@@ -42,12 +42,16 @@ class SaveView(View):
         for key, value in data.items():
             if isinstance(value, list) and len(value) == 1:
                 data[key] = value[0]
+
+        if data['parent_id'] == '':  # 添加目录
+            data['parent_id'] = 0
         if data['id'] == '-1':  # 添加
             obj_sysMenu = SysMenu(name=data['name'], icon=data['icon'],
                                   parent_id=data['parent_id'], order_num=data['order_num'], path=data['path'],
                                   component=data['component'], menu_type=data['menu_type'], perms=data['perms'],
                                   remark=data['remark'])
             obj_sysMenu.create_time = datetime.now().date()
+            obj_sysMenu.update_time = datetime.now().date()
             obj_sysMenu.save()
         else:  # 修改
             obj_sysMenu = SysMenu(id=data['id'], name=data['name'], icon=data['icon'],
